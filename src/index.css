@@ -1,8 +1,8 @@
 /**
- * Global styles — Dark Cinematic Theme.
+ * Global styles — iOS 26 Dark Theme.
  *
+ * Warm deep-midnight gradient background with amber/rose/violet tones.
  * Forced dark mode per spec. No light mode.
- * Background is a deep cinematic dark for aurora and glow effects.
  */
 
 *,
@@ -151,8 +151,8 @@
   );
   --gradient-vignette: radial-gradient(
     ellipse 80% 70% at 50% 50%,
-    transparent 35%,
-    rgba(0, 0, 0, 0.6) 100%
+    transparent 30%,
+    rgba(2, 1, 8, 0.5) 100%
   );
 
   /* ── Typography ────────────────────────────────────────────────────── */
@@ -187,7 +187,8 @@
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg-primary);
+  background: var(--gradient-ios26-base);
+  background-attachment: fixed;
 }
 
 h1, h2, h3, h4 {

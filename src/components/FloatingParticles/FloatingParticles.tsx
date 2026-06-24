@@ -35,6 +35,8 @@ interface Particle {
   readonly delay: number
   /** Horizontal drift offset in px */
   readonly drift: number
+  /** Warm-toned HSL hue (amber 30–violet 280) */
+  readonly hue: number
 }
 
 /* ── Seeded pseudo-random (golden-angle) ── */
@@ -48,15 +50,18 @@ function buildParticles(): readonly Particle[] {
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const seed = i * GOLDEN_ANGLE
 
+    // Warm-toned hues across the amber → rose → violet spectrum
+    const warmHues = [30, 35, 40, 340, 350, 10, 20, 280, 300, 320]
     particles.push({
       id: i,
       x: ((seed * 1.07) % 100),
       y: ((seed * 0.73 + 10) % 90),
       size: 2 + ((seed * 0.31) % 4),
-      opacity: 0.15 + ((seed * 0.37) % 0.45),
+      opacity: 0.15 + ((seed * 0.37) % 0.55),
       duration: 14 + ((seed * 0.67) % 22),
       delay: (seed * 0.53) % 18,
       drift: ((seed * 2.03) % 60) - 30,
+      hue: warmHues[i % warmHues.length] + ((seed * 3) % 15),
     })
   }
 
@@ -84,6 +89,7 @@ function FloatingParticles() {
               '--duration': `${p.duration}s`,
               '--delay': `${p.delay}s`,
               '--drift': `${p.drift}px`,
+              '--hue': p.hue,
             } as React.CSSProperties
           }
         />
