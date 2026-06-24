@@ -13,9 +13,9 @@
 
 :root {
   /* ── Core palette — iOS 26 deep warm dark ──────────────────────────── */
-  --bg-primary: #0a080c;
-  --bg-secondary: #120e14;
-  --bg-card: #1a1520;
+  --bg-primary: #020108;
+  --bg-secondary: #0a060f;
+  --bg-card: #120e18;
   --text-primary: #f0f0f5;
   --text-secondary: #9ca3af;
   --text-muted: #6b7280;
@@ -163,7 +163,8 @@
   letter-spacing: 0.18px;
   color-scheme: dark;
   color: var(--text-secondary);
-  background: var(--bg-primary);
+  background: var(--gradient-ios26-base);
+  background-attachment: fixed;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
