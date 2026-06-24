@@ -1,15 +1,14 @@
 /**
- * Background — cinematic animated backdrop.
+ * Background — iOS 26 gradient wallpaper.
  *
- * Layers aurora gradients + colorful blur circles with a subtle breathing
- * animation. Purely decorative — `aria-hidden="true"` and no interactive
- * or semantic role.
+ * Three layered glow zones (warm top-left, cool bottom-right, center ambient)
+ * that drift and pulse independently over a deep midnight base gradient.
+ *
+ * Purely decorative — `aria-hidden="true"` and no interactive or semantic role.
  *
  * Performance:
- *  - All animations run on GPU-composited properties (transform, opacity).
- *  - `will-change` set only on animated layers to avoid layer explosion.
- *  - Blur circles use CSS `filter: blur()` — hardware accelerated on
- *    modern browsers when paired with transform.
+ *  - All animations on transform/opacity only — GPU composited.
+ *  - No blur filters on glow layers (uses opacity + radial gradients).
  *  - No JS-driven animation loop; entirely CSS driven.
  */
 
@@ -19,17 +18,14 @@ import './Background.css'
 function Background() {
   return (
     <div className="background" aria-hidden="true">
-      {/* ── Aurora gradient layers ── */}
-      <div className="background__aurora background__aurora--1" />
-      <div className="background__aurora background__aurora--2" />
-      <div className="background__aurora background__aurora--3" />
+      {/* ── Warm amber/rose glow — top-left ── */}
+      <div className="background__warm" />
 
-      {/* ── Colorful blur circles ── */}
-      <div className="background__blob background__blob--1" />
-      <div className="background__blob background__blob--2" />
-      <div className="background__blob background__blob--3" />
-      <div className="background__blob background__blob--4" />
-      <div className="background__blob background__blob--5" />
+      {/* ── Cool blue/violet glow — bottom-right ── */}
+      <div className="background__cool" />
+
+      {/* ── Center ambient glow — ties warm and cool ── */}
+      <div className="background__center" />
 
       {/* ── Vignette (dark edges for focus) ── */}
       <div className="background__vignette" />

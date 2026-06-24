@@ -1,28 +1,24 @@
 /**
- * Background styles — cinematic animated backdrop.
+ * Background — iOS 26 gradient wallpaper.
+ *
+ * A rich, layered gradient backdrop inspired by Apple's iOS 26 wallpaper
+ * language: warm amber/copper tones at the top transition through rose
+ * and violet into a deep midnight blue at the bottom.
  *
  * Architecture:
  *  - Fixed full-screen layer at z-index -1 (behind all content).
- *  - Three aurora gradient layers drift at staggered speeds with
- *    subtle opacity pulses → sense of depth.
- *  - Five blur circles ("blobs") float independently using different
- *    keyframe sets → organic, non-repeating feel.
- *  - The container applies a slow breathing scale animation.
- *  - Vignette overlay darkens edges for focus.
+ *  - Base gradient: warm dark → deep midnight (the "canvas").
+ *  - Warm glow layer: soft amber/rose light from top-left (sunset memory).
+ *  - Cool glow layer: soft blue/violet light from bottom-right (deep space).
+ *  - Center ambient glow: ties warm and cool together.
+ *  - Very slow drift animation for a subtle living-wallpaper feel.
+ *  - Vignette darkens edges for cinematic focus.
  *  - Noise texture adds film grain warmth.
  *
- * Performance notes:
- *  - Every animation animates ONLY `transform` and `opacity`.
- *  - `will-change: transform` applied to auroral layers and blobs;
- *    the container itself does NOT have `will-change` to avoid
- *    creating a new stacking context for content above it.
- *  - `filter: blur()` on blobs is GPU-accelerated on Chromium and
- *    recent Safari; it is the single paint-heavy property, kept to
- *    5 blobs to stay within budget.
- *  - `inset: -50%` on aurora layers allows translation without
- *    exposing edges.
- *  - Noise texture is a small inline SVG data-uri — one element,
- *    no network request.
+ * Performance:
+ *  - All animations on transform/opacity only — GPU composited.
+ *  - Blur is avoided on glow layers (uses opacity + radial gradients).
+ *  - Noise is a single inline SVG — no network request.
  */
 
 /* ===================== Container ===================== */
@@ -34,216 +30,102 @@
   overflow: hidden;
   pointer-events: none;
 
-  /* Breathing — subtle scale pulse */
-  animation: breathing 10s ease-in-out infinite;
+  /* Base canvas — deep warm-to-midnight gradient */
+  background: var(--gradient-ios26-base);
+
+  /* Ultra-slow breathing — the wallpaper is alive */
+  animation: ios26Breath 20s ease-in-out infinite;
   transform-origin: center center;
 }
 
-@keyframes breathing {
+@keyframes ios26Breath {
   0%,
   100% {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.03);
+    transform: scale(1.02);
   }
 }
 
-/* ===================== Aurora layers ===================== */
+/* ===================== Warm glow (top-left) ===================== */
 
-.background__aurora {
+.background__warm {
   position: absolute;
-  inset: -50%;
+  inset: -30%;
   will-change: transform;
+  background: var(--gradient-ios26-warm);
+  animation: warmDrift 28s ease-in-out infinite;
+  transform-origin: 25% 15%;
 }
 
-/* Purple / violet aurora — dominant */
-.background__aurora--1 {
-  background: radial-gradient(
-    ellipse 80% 60% at 20% 50%,
-    rgba(139, 92, 246, 0.25) 0%,
-    rgba(99, 102, 241, 0.12) 40%,
-    transparent 65%
-  );
-  animation: auroraDrift1 24s ease-in-out infinite;
-}
-
-/* Pink / rose aurora — warm accent */
-.background__aurora--2 {
-  background: radial-gradient(
-    ellipse 70% 50% at 80% 20%,
-    rgba(236, 72, 153, 0.16) 0%,
-    rgba(244, 114, 182, 0.09) 35%,
-    transparent 60%
-  );
-  animation: auroraDrift2 28s ease-in-out infinite;
-}
-
-/* Cyan / blue aurora — cool accent */
-.background__aurora--3 {
-  background: radial-gradient(
-    ellipse 60% 70% at 50% 80%,
-    rgba(56, 189, 248, 0.14) 0%,
-    rgba(14, 165, 233, 0.07) 30%,
-    transparent 55%
-  );
-  animation: auroraDrift3 21s ease-in-out infinite;
-}
-
-@keyframes auroraDrift1 {
+@keyframes warmDrift {
   0%,
   100% {
-    transform: translate(0%, 0%);
-    opacity: 0.6;
-  }
-  25% {
-    transform: translate(8%, -6%);
-    opacity: 0.85;
-  }
-  50% {
-    transform: translate(4%, 8%);
-    opacity: 0.5;
-  }
-  75% {
-    transform: translate(-6%, 4%);
+    transform: translate(0%, 0%) scale(1);
     opacity: 0.7;
   }
+  25% {
+    transform: translate(4%, -3%) scale(1.04);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(2%, 4%) scale(0.97);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translate(-3%, 2%) scale(1.02);
+    opacity: 0.8;
+  }
 }
 
-@keyframes auroraDrift2 {
+/* ===================== Cool glow (bottom-right) ===================== */
+
+.background__cool {
+  position: absolute;
+  inset: -30%;
+  will-change: transform;
+  background: var(--gradient-ios26-cool);
+  animation: coolDrift 32s ease-in-out infinite;
+  transform-origin: 75% 85%;
+}
+
+@keyframes coolDrift {
   0%,
   100% {
-    transform: translate(0%, 0%);
+    transform: translate(0%, 0%) scale(1);
     opacity: 0.5;
   }
   33% {
-    transform: translate(-10%, 6%);
-    opacity: 0.75;
+    transform: translate(-5%, 4%) scale(1.05);
+    opacity: 0.7;
   }
   66% {
-    transform: translate(6%, -8%);
+    transform: translate(3%, -5%) scale(0.95);
     opacity: 0.4;
   }
 }
 
-@keyframes auroraDrift3 {
-  0%,
-  100% {
-    transform: translate(0%, 0%);
-    opacity: 0.4;
-  }
-  33% {
-    transform: translate(-5%, -10%);
-    opacity: 0.65;
-  }
-  66% {
-    transform: translate(8%, 3%);
-    opacity: 0.35;
-  }
-}
+/* ===================== Center ambient glow ===================== */
 
-/* ===================== Blur circles (blobs) ===================== */
-
-.background__blob {
+.background__center {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
+  inset: -40%;
   will-change: transform;
+  background: var(--gradient-ios26-glow);
+  animation: centerPulse 24s ease-in-out infinite;
+  transform-origin: 50% 40%;
 }
 
-/* Large purple blob — top-left quadrant */
-.background__blob--1 {
-  width: 600px;
-  height: 600px;
-  background: rgba(139, 92, 246, 0.14);
-  top: -10%;
-  left: -5%;
-  animation: blobFloat 30s ease-in-out infinite;
-}
-
-/* Pink blob — bottom-right quadrant */
-.background__blob--2 {
-  width: 420px;
-  height: 420px;
-  background: rgba(236, 72, 153, 0.12);
-  bottom: -8%;
-  right: -4%;
-  animation: blobFloat2 25s ease-in-out infinite;
-}
-
-/* Cyan blob — center-right */
-.background__blob--3 {
-  width: 360px;
-  height: 360px;
-  background: rgba(56, 189, 248, 0.1);
-  top: 35%;
-  left: 55%;
-  animation: blobFloat3 35s ease-in-out infinite;
-}
-
-/* Indigo blob — center-left */
-.background__blob--4 {
-  width: 280px;
-  height: 280px;
-  background: rgba(99, 102, 241, 0.12);
-  top: 55%;
-  left: 8%;
-  animation: blobFloat4 28s ease-in-out infinite;
-}
-
-/* Amber blob — top-right (warm accent) */
-.background__blob--5 {
-  width: 500px;
-  height: 500px;
-  background: rgba(251, 191, 36, 0.08);
-  top: -15%;
-  right: 15%;
-  animation: blobFloat 32s ease-in-out infinite reverse;
-}
-
-@keyframes blobFloat {
+@keyframes centerPulse {
   0%,
   100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(35px, -25px) scale(1.08);
-  }
-  66% {
-    transform: translate(-20px, 30px) scale(0.93);
-  }
-}
-
-@keyframes blobFloat2 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
+    transform: translate(0%, 0%) scale(1);
+    opacity: 0.5;
   }
   50% {
-    transform: translate(-35px, 45px) scale(1.12);
-  }
-}
-
-@keyframes blobFloat3 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(25px, -35px) scale(0.95);
-  }
-  66% {
-    transform: translate(-35px, 15px) scale(1.06);
-  }
-}
-
-@keyframes blobFloat4 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(30px, 25px) scale(1.1);
+    transform: translate(0%, -2%) scale(1.06);
+    opacity: 0.75;
   }
 }
 
@@ -252,11 +134,12 @@
 .background__vignette {
   position: absolute;
   inset: 0;
-  background: var(--gradient-vignette, radial-gradient(
-    ellipse 80% 70% at 50% 50%,
-    transparent 40%,
-    rgba(0, 0, 0, 0.55) 100%
-  ));
+  background: radial-gradient(
+    ellipse 75% 65% at 50% 50%,
+    transparent 30%,
+    rgba(2, 1, 8, 0.45) 70%,
+    rgba(2, 1, 8, 0.75) 100%
+  );
   pointer-events: none;
   z-index: 1;
 }
@@ -266,7 +149,7 @@
 .background__noise {
   position: absolute;
   inset: 0;
-  opacity: 0.025;
+  opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 256px 256px;
@@ -282,13 +165,11 @@
     animation: none;
   }
 
-  .background__aurora {
+  .background__warm,
+  .background__cool,
+  .background__center {
     animation: none;
     opacity: 0.6;
-  }
-
-  .background__blob {
-    animation: none;
   }
 
   .background__noise {
@@ -296,59 +177,18 @@
   }
 }
 
-/* ===================== Mobile performance ===================== */
+/* ===================== Mobile ===================== */
 
 @media (max-width: 768px) {
-  .background__blob {
-    filter: blur(40px); /* halved from 80px — lighter GPU load */
-  }
-
-  .background__blob--1 {
-    width: 320px;
-    height: 320px;
-  }
-
-  .background__blob--2 {
-    width: 240px;
-    height: 240px;
-  }
-
-  .background__blob--3 {
-    width: 200px;
-    height: 200px;
-  }
-
-  .background__blob--4 {
-    display: none; /* 4 blobs on tablet, 3 on phone below */
-  }
-
-  .background__blob--5 {
-    width: 260px;
-    height: 260px;
+  .background__warm,
+  .background__cool,
+  .background__center {
+    inset: -20%;
   }
 }
 
 @media (max-width: 480px) {
-  .background__blob {
-    filter: blur(30px);
-  }
-
-  .background__blob--1 {
-    width: 200px;
-    height: 200px;
-  }
-
-  .background__blob--2 {
-    width: 160px;
-    height: 160px;
-  }
-
-  .background__blob--3 {
-    display: none;
-  }
-
-  .background__blob--5 {
-    width: 180px;
-    height: 180px;
+  .background__center {
+    display: none; /* two layers on phone is enough */
   }
 }

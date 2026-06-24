@@ -12,10 +12,10 @@
 }
 
 :root {
-  /* ── Core palette — deep cinematic dark ────────────────────────────── */
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-card: #1a1a2e;
+  /* ── Core palette — iOS 26 deep warm dark ──────────────────────────── */
+  --bg-primary: #0a080c;
+  --bg-secondary: #120e14;
+  --bg-card: #1a1520;
   --text-primary: #f0f0f5;
   --text-secondary: #9ca3af;
   --text-muted: #6b7280;
@@ -96,6 +96,38 @@
   /* ── Gradients — rich, premium (Linear / Apple inspired) ───────────── */
   --gradient-accent: linear-gradient(135deg, #c084fc, #a78bfa, #e879f9);
   --gradient-accent-strong: linear-gradient(135deg, #a855f7, #7c3aed, #db2777);
+
+  /* iOS 26 — warm amber-to-midnight gradient palette */
+  --gradient-ios26-base: linear-gradient(
+    165deg,
+    #1a0a0e 0%,
+    #1a0f1a 20%,
+    #0f0a18 45%,
+    #05040a 70%,
+    #020108 100%
+  );
+  --gradient-ios26-warm: radial-gradient(
+    ellipse 90% 55% at 25% 15%,
+    rgba(255, 170, 120, 0.12) 0%,
+    rgba(255, 120, 130, 0.08) 25%,
+    rgba(180, 100, 200, 0.06) 50%,
+    transparent 80%
+  );
+  --gradient-ios26-cool: radial-gradient(
+    ellipse 70% 60% at 75% 85%,
+    rgba(100, 140, 255, 0.10) 0%,
+    rgba(80, 100, 220, 0.06) 30%,
+    rgba(60, 60, 180, 0.04) 50%,
+    transparent 75%
+  );
+  --gradient-ios26-glow: radial-gradient(
+    ellipse 60% 45% at 50% 40%,
+    rgba(255, 200, 150, 0.06) 0%,
+    rgba(220, 150, 180, 0.04) 30%,
+    rgba(150, 120, 200, 0.03) 55%,
+    transparent 80%
+  );
+
   --gradient-glass: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.06),
