@@ -1,16 +1,46 @@
 /**
- * PhotoCard styles.
+ * PhotoCard styles — iOS 26 Liquid Glass.
  *
- * Scatter layout uses CSS custom properties set by the component.
- * Hover scale/lift/shadow are driven by GSAP via composable
- * custom properties (--gsap-y, --gsap-scale) — no CSS :hover block.
+ * The card is a frosted glass container with a subtle gradient border,
+ * inner depth glow, and a floating image. On hover the glass brightens,
+ * the border comes alive with accent light, and a liquid shine sweeps
+ * across the surface.
  *
- * Transitions are intentionally absent: GSAP owns all motion.
+ * Inspired by Apple's liquid-glass language (visionOS × iOS convergence):
+ *  - Layered frosted backdrop with variable blur
+ *  - Gradient border that reads as refracted light
+ *  - Multi-stop inner shadow for volumetric depth
+ *  - Subtle specular highlight (the "shine")
  *
- * Polish: layered shadows, image gradient overlay, premium glass caption.
+ * ── Structure ──
+ *
+ *  .photo-card                           ← glass pane
+ *    │
+ *    ├─ .photo-card__glaze               ← specular shine overlay
+ *    │
+ *    ├─ .photo-card__image-wrapper       ← image well
+ *    │    └─ img
+ *    │
+ *    ├─ .photo-card__caption             ← glass caption bar
+ *    │
+ *    └─ .photo-card__border              ← gradient border layer
+ *
+ * The glaze and border are pseudo-elements on .photo-card.
  */
 
 .photo-card {
+  /* ── Glass tokens (customisable per instance) ────────────────────── */
+  --glass-tint: rgba(18, 18, 26, 0.55);
+  --glass-tint-hover: rgba(18, 18, 26, 0.40);
+  --glass-blur: 24px;
+  --glass-edge: rgba(255, 255, 255, 0.10);
+  --glass-edge-hover: rgba(255, 255, 255, 0.22);
+  --glass-glow: radial-gradient(
+    ellipse 120% 80% at 30% 20%,
+    rgba(192, 132, 252, 0.12) 0%,
+    transparent 70%
+  );
+
   /* ── Scatter (constant, set inline) ─────────────────────────────── */
   --scatter-x: 0px;
   --scatter-y: 0px;
@@ -45,33 +75,129 @@
   /* Hint the browser to promote to its own compositor layer */
   will-change: transform;
 
-  border-radius: var(--radius-lg, 12px);
-  overflow: hidden;
+  position: relative;
+  border-radius: var(--radius-xl, 16px);
+  overflow: visible;          /* border pseudo-element lives outside */
   cursor: grab;
 
-  /* Premium layered shadow — using design tokens */
-  box-shadow: var(--shadow-card);
+  /* ── Liquid glass body ──────────────────────────────────────────── */
+  background: var(--glass-tint);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+
+  /* Clamp the backdrop to the card bounds so blur doesn't spill out */
+  isolation: isolate;
+
+  /* Volumetric inner depth — light enters from top-left, pools at bottom */
+  box-shadow:
+    /* ambient occlusion — ground shadow */
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    /* tight contact shadow */
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    /* inner top-left light rim */
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    /* inner bottom-right depth */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+
+  outline: none;
+
+  /* The stagger reveal starts cards hidden; GSAP fades them in */
+  opacity: 0;
+
+  /* Prevent margin collapse with pseudo-elements */
+  margin: 2px;
 
   /* Show grabbing cursor while mouse button is held */
   &:active {
     cursor: grabbing;
   }
-
-  /* The stagger reveal starts cards hidden; GSAP fades them in */
-  opacity: 0;
-
-  background: #1e1e2e;
-  outline: none;
-
-  /* Ensure focus ring is visible — accent glow with warm undertone */
-  &:focus-visible {
-    outline: 2px solid var(--accent, #c084fc);
-    outline-offset: 3px;
-    box-shadow: var(--shadow-card), 0 0 20px var(--accent-glow, rgba(192, 132, 252, 0.25));
-  }
 }
 
-/* ── Image wrapper ─────────────────────────────────────────────────────── */
+/* ── Gradient border (refracted light edge) ──────────────────────────── */
+/* Uses a pseudo-element slightly larger than the card to draw a
+   continuous gradient border that reads as light catching the glass rim. */
+
+.photo-card::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  z-index: -1;
+  border-radius: calc(var(--radius-xl, 16px) + 1.5px);
+
+  /* Multi-stop gradient — warm white light at top-left, cool at bottom-right */
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.04) 30%,
+    rgba(192, 132, 252, 0.08) 50%,
+    rgba(255, 255, 255, 0.02) 70%,
+    rgba(255, 255, 255, 0.10) 100%
+  );
+
+  transition: opacity 0.5s ease, background 0.5s ease;
+  pointer-events: none;
+}
+
+/* ── Specular glaze (the "liquid" shine) ─────────────────────────────── */
+/* A soft highlight that sweeps across the glass surface, mimicking a
+   glossy physical material catching ambient light. */
+
+.photo-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xl, 16px);
+  pointer-events: none;
+  z-index: 2;
+
+  /* Radial gradient placed at the "light source" — top-left quadrant */
+  background: var(--glass-glow);
+  opacity: 0.6;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* On hover the glass comes alive — brighter tint, warmer edge, stronger glow */
+
+.photo-card:hover {
+  background: var(--glass-tint-hover);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.photo-card:hover::before {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.30) 0%,
+    rgba(192, 132, 252, 0.18) 30%,
+    rgba(232, 121, 249, 0.10) 50%,
+    rgba(255, 255, 255, 0.06) 70%,
+    rgba(255, 255, 255, 0.16) 100%
+  );
+}
+
+.photo-card:hover::after {
+  opacity: 0.85;
+  /* Slight shift as if the light source moves with the card lift */
+  transform: translateY(-2px);
+}
+
+/* ── Focus ring (keyboard navigation) ────────────────────────────────── */
+
+.photo-card:focus-visible {
+  outline: 2px solid var(--accent, #c084fc);
+  outline-offset: 4px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 0 24px var(--accent-glow, rgba(192, 132, 252, 0.25));
+}
+
+/* ── Image wrapper — the "well" the photo sits inside ─────────────────── */
 
 .photo-card__image-wrapper {
   position: relative;
@@ -79,6 +205,11 @@
   aspect-ratio: 1;
   overflow: hidden;
   line-height: 0;
+
+  /* Sink the image slightly into the glass so it feels inset */
+  margin: 0;
+  border-radius: var(--radius-lg, 12px);
+  z-index: 1;
 }
 
 /* Gradient overlay — reveals on hover for a Pinterest-style depth cue */
@@ -102,7 +233,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: filter 0.4s ease, transform 0.4s ease;
+  transition: filter 0.5s ease, transform 0.5s ease;
   position: relative;
   z-index: 0;
 }
@@ -113,14 +244,24 @@
   transform: scale(1.02);
 }
 
-/* ── Caption (Polaroid-style) ───────────────────────────────────────────── */
+/* ── Caption — frosted glass bar (Polaroid-style, but liquid glass) ──── */
 
 .photo-card__caption {
+  position: relative;
+  z-index: 1;
   padding: var(--space-3, 12px) var(--space-4, 16px) var(--space-4, 16px);
-  background: var(--glass-bg-light);
-  backdrop-filter: blur(var(--blur-md, 8px));
-  -webkit-backdrop-filter: blur(var(--blur-md, 8px));
-  border-top: 1px solid var(--glass-border);
+
+  /* Seamless continuation of the liquid glass surface */
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(var(--blur-lg, 12px));
+  -webkit-backdrop-filter: blur(var(--blur-lg, 12px));
+
+  /* Subtle internal divider — light catching the edge of the image well */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+
+  border-radius: 0 0 var(--radius-lg, 12px) var(--radius-lg, 12px);
 }
 
 .photo-card__caption-text {
@@ -134,7 +275,27 @@
   color: rgba(255, 255, 255, 0.85);
   text-align: left;
   word-break: break-word;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Resting shadow used by GSAP hover-out animation ─────────────────── */
+/* Kept as a CSS custom property so GSAP can animate it without flicker.
+   This matches the resting box-shadow value above. */
+.photo-card-resting-shadow {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.photo-card-hover-shadow {
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* ===================== Mobile tweaks ===================== */
@@ -142,6 +303,7 @@
 @media (max-width: 768px) {
   .photo-card {
     --scatter-scale: 0.6;
+    --glass-blur: 16px;
   }
 
   .photo-card__image-wrapper {
@@ -152,6 +314,7 @@
 @media (max-width: 480px) {
   .photo-card {
     --scatter-scale: 0.4;
+    --glass-blur: 12px;
   }
 
   .photo-card__caption {

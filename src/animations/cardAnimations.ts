@@ -85,12 +85,12 @@ export function animateCardHoverIn(el: HTMLElement) {
   if (prefersReducedMotion()) return gsap.timeline()
 
   return gsap.to(el, {
-    '--gsap-y': '-8px',
+    '--gsap-y': '-10px',
     '--gsap-scale': 1.04,
-    // Premium hover shadow: deeper drop + accent glow ring
+    // Liquid glass hover: deeper float, brighter inner rim, accent glow
     boxShadow:
-      '0 20px 40px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.25), 0 0 0 1px rgba(192,132,252,0.12)',
-    duration: 0.4,
+      '0 16px 48px rgba(0,0,0,0.45), 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.2)',
+    duration: 0.45,
     ease: 'power2.out',
     overwrite: 'auto',
   })
@@ -108,10 +108,10 @@ export function animateCardHoverOut(el: HTMLElement) {
   return gsap.to(el, {
     '--gsap-y': '0px',
     '--gsap-scale': 1,
-    // Clean resting shadow — matches --shadow-card token
+    // Liquid glass resting: volumetric inner depth + ambient shadow
     boxShadow:
-      '0 2px 4px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.02)',
-    duration: 0.45,
+      '0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.25)',
+    duration: 0.5,
     ease: 'power2.out',
     overwrite: 'auto',
   })
