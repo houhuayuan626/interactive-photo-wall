@@ -57,16 +57,16 @@
 @media (max-width: 768px) {
   .photo-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-4, 16px);
-    padding: var(--space-5, 20px) var(--space-4, 16px);
+    gap: var(--space-2, 8px);
+    padding: var(--space-3, 12px) var(--space-2, 8px);
   }
 }
 
-/* Very narrow screens — single column */
-@media (max-width: 420px) {
+/* Very narrow screens — single column (tiny phones only) */
+@media (max-width: 360px) {
   .photo-grid {
     grid-template-columns: 1fr;
-    gap: 18px;
-    padding: var(--space-4, 16px) var(--space-3, 12px);
+    gap: var(--space-3, 12px);
+    padding: var(--space-3, 12px) var(--space-2, 8px);
   }
 }

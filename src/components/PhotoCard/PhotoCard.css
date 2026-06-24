@@ -143,6 +143,10 @@
   .photo-card {
     --scatter-scale: 0.6;
   }
+
+  .photo-card__image-wrapper {
+    aspect-ratio: 4 / 3;
+  }
 }
 
 @media (max-width: 480px) {
