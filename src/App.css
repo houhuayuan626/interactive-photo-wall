@@ -1,0 +1,15 @@
+/**
+ * App-level styles.
+ *
+ * Minimal — most styling lives in component CSS files.
+ * Background layers are handled by the Background component.
+ */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 100svh;
+  position: relative;
+}

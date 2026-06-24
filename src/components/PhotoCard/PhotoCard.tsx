@@ -1,0 +1,182 @@
+/**
+ * PhotoCard — single photo card component.
+ *
+ * Displays an image with deterministic scatter transform (rotation + offset).
+ * Optionally shows a Polaroid-style caption area beneath the image.
+ *
+ * GSAP-powered hover interactions: scale, lift, shadow.
+ * Pure presentational component — no business logic.
+ */
+
+import { useRef, useCallback, useEffect } from 'react'
+import type { Photo } from '../../types/photo.ts'
+import {
+  animateCardHoverIn,
+  animateCardHoverOut,
+} from '../../animations/cardAnimations.ts'
+import './PhotoCard.css'
+
+export interface PhotoCardProps {
+  /** The photo data to render */
+  readonly photo: Photo
+
+  /** Called when the card is clicked or activated via keyboard */
+  readonly onClick?: (id: number) => void
+
+  /** Whether to show the caption below the image (Polaroid style) */
+  readonly showCaption?: boolean
+
+  /** Additional CSS class names */
+  readonly className?: string
+
+  /* ══════════════ Phase 7A — Draggable Card ══════════════ */
+
+  /** User-applied horizontal offset (px), committed after drag end */
+  readonly userOffsetX?: number
+
+  /** User-applied vertical offset (px), committed after drag end */
+  readonly userOffsetY?: number
+
+  /** Called on mousedown to start a mouse drag gesture */
+  readonly onDragStart?: (id: number, el: HTMLElement, clientX: number, clientY: number) => void
+
+  /* ══════════════ Phase 7B — Touch Drag ══════════════ */
+
+  /** Called via native touchstart to start a touch drag gesture */
+  readonly onTouchDragStart?: (id: number, el: HTMLElement, clientX: number, clientY: number) => void
+}
+
+export function PhotoCard({
+  photo,
+  onClick,
+  showCaption = false,
+  className = '',
+  userOffsetX = 0,
+  userOffsetY = 0,
+  onDragStart,
+  onTouchDragStart,
+}: PhotoCardProps) {
+  const { id, src, caption, rotation, offsetX, offsetY } = photo
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  // ── Ref for touch callback (stable, avoids re-attaching listener) ───
+
+  const onTouchDragStartRef = useRef(onTouchDragStart)
+  useEffect(() => { onTouchDragStartRef.current = onTouchDragStart }, [onTouchDragStart])
+
+  // ── Native touchstart listener ───────────────────────────────────────
+  // React synthetic touchstart is passive by default; we attach natively
+  // with { passive: true } because we don't need preventDefault here —
+  // scroll prevention happens in the touchmove handler inside the hook.
+
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+
+    function onTouchStart(e: TouchEvent) {
+      // Only respond to single-finger touches on the card itself
+      if (e.touches.length !== 1) return
+      const touch = e.touches[0]
+      if (!touch) return
+      onTouchDragStartRef.current?.(id, el, touch.clientX, touch.clientY)
+    }
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true })
+    return () => el.removeEventListener('touchstart', onTouchStart)
+  }, [id])
+
+  // ── Hover / focus handlers ───────────────────────────────────────────
+
+  const handleMouseEnter = useCallback(() => {
+    if (cardRef.current) animateCardHoverIn(cardRef.current)
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    if (cardRef.current) animateCardHoverOut(cardRef.current)
+  }, [])
+
+  const handleFocus = useCallback(() => {
+    if (cardRef.current) animateCardHoverIn(cardRef.current)
+  }, [])
+
+  const handleBlur = useCallback(() => {
+    if (cardRef.current) animateCardHoverOut(cardRef.current)
+  }, [])
+
+  // ── Click handler — suppress if preceded by a drag ──────────────────
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      const el = cardRef.current
+      // If the card was just dragged, don't open the lightbox
+      if (el?.dataset.dragged) {
+        delete el.dataset.dragged
+        e.preventDefault()
+        return
+      }
+      onClick?.(id)
+    },
+    [id, onClick],
+  )
+
+  // ── Drag start (onMouseDown) ─────────────────────────────────────────
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      // Only primary button
+      if (e.button !== 0) return
+      e.preventDefault()
+      if (cardRef.current && onDragStart) {
+        onDragStart(id, cardRef.current, e.clientX, e.clientY)
+      }
+    },
+    [id, onDragStart],
+  )
+
+  // ── Scatter + user offset style ──────────────────────────────────────
+
+  const scatterStyle = {
+    '--scatter-x': `${offsetX}px`,
+    '--scatter-y': `${offsetY}px`,
+    '--scatter-rotate': `${rotation}deg`,
+    '--user-x': `${userOffsetX}px`,
+    '--user-y': `${userOffsetY}px`,
+  } as React.CSSProperties
+
+  return (
+    <div
+      ref={cardRef}
+      className={`photo-card ${className}`}
+      style={scatterStyle}
+      onClick={handleClick}
+      onMouseDown={handleMouseDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      role="button"
+      tabIndex={0}
+      aria-label={caption}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick?.(id)
+        }
+      }}
+    >
+      <div className="photo-card__image-wrapper">
+        <img
+          className="photo-card__image"
+          src={src}
+          alt={caption}
+          loading="lazy"
+        />
+      </div>
+      {showCaption && (
+        <div className="photo-card__caption">
+          <span className="photo-card__caption-text">{caption}</span>
+        </div>
+      )}
+    </div>
+  )
+}

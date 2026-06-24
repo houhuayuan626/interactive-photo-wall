@@ -1,0 +1,72 @@
+/**
+ * PhotoGrid styles.
+ *
+ * CSS Grid with responsive column counts:
+ *   Desktop (>1024px) → 5 columns
+ *   Tablet  (768–1024px) → 3 columns
+ *   Mobile  (<768px)  → 2 columns
+ *
+ * No horizontal scrolling at any breakpoint.
+ *
+ * Polish: refined spacing scale, max-width centering.
+ */
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-6, 28px);
+  padding: var(--space-12, 48px);
+  width: 100%;
+  max-width: 1440px;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+/* Empty state */
+.photo-grid--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+}
+
+.photo-grid__empty-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
+/* Individual cell — provides positioning context for scatter offsets */
+.photo-grid__cell {
+  position: relative;
+  overflow: visible;
+}
+
+/* ===================== Responsive breakpoints ===================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .photo-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5, 22px);
+    padding: var(--space-8, 32px) var(--space-6, 24px);
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .photo-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4, 16px);
+    padding: var(--space-5, 20px) var(--space-4, 16px);
+  }
+}
+
+/* Very narrow screens — single column */
+@media (max-width: 420px) {
+  .photo-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: var(--space-4, 16px) var(--space-3, 12px);
+  }
+}

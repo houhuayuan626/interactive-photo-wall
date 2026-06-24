@@ -1,0 +1,161 @@
+/**
+ * PhotoCard styles.
+ *
+ * Scatter layout uses CSS custom properties set by the component.
+ * Hover scale/lift/shadow are driven by GSAP via composable
+ * custom properties (--gsap-y, --gsap-scale) — no CSS :hover block.
+ *
+ * Transitions are intentionally absent: GSAP owns all motion.
+ *
+ * Polish: layered shadows, image gradient overlay, premium glass caption.
+ */
+
+.photo-card {
+  /* ── Scatter (constant, set inline) ─────────────────────────────── */
+  --scatter-x: 0px;
+  --scatter-y: 0px;
+  --scatter-rotate: 0deg;
+
+  /* ── GSAP‑animated (composed into transform below) ──────────────── */
+  --gsap-y: 0px;
+  --gsap-scale: 1;
+
+  /* ── User drag offset (set dynamically by useCardDrag) ──────────── */
+  --user-x: 0px;
+  --user-y: 0px;
+
+  /* ── Scatter scale (1 on desktop, reduced on mobile) ────────────── */
+  --scatter-scale: 1;
+
+  /* Compose scatter + GSAP + user into a single transform.
+     translate3d avoids GPU-promotion issues on some hardware. */
+  transform:
+    translate3d(
+      calc(var(--scatter-x) * var(--scatter-scale) + var(--user-x)),
+      calc(var(--scatter-y) * var(--scatter-scale) + var(--gsap-y) + var(--user-y)),
+      0
+    )
+    rotate(calc(var(--scatter-rotate) * var(--scatter-scale)))
+    scale(var(--gsap-scale));
+
+  /* Allow vertical scroll while letting us capture horizontal drag.
+     pan-y = browser handles vertical, our JS handles horizontal. */
+  touch-action: pan-y;
+
+  /* Hint the browser to promote to its own compositor layer */
+  will-change: transform;
+
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  cursor: grab;
+
+  /* Premium layered shadow — using design tokens */
+  box-shadow: var(--shadow-card);
+
+  /* Show grabbing cursor while mouse button is held */
+  &:active {
+    cursor: grabbing;
+  }
+
+  /* The stagger reveal starts cards hidden; GSAP fades them in */
+  opacity: 0;
+
+  background: #1e1e2e;
+  outline: none;
+
+  /* Ensure focus ring is visible — accent glow with warm undertone */
+  &:focus-visible {
+    outline: 2px solid var(--accent, #c084fc);
+    outline-offset: 3px;
+    box-shadow: var(--shadow-card), 0 0 20px var(--accent-glow, rgba(192, 132, 252, 0.25));
+  }
+}
+
+/* ── Image wrapper ─────────────────────────────────────────────────────── */
+
+.photo-card__image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  line-height: 0;
+}
+
+/* Gradient overlay — reveals on hover for a Pinterest-style depth cue */
+.photo-card__image-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-overlay);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.photo-card:hover .photo-card__image-wrapper::after {
+  opacity: 1;
+}
+
+.photo-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: filter 0.4s ease, transform 0.4s ease;
+  position: relative;
+  z-index: 0;
+}
+
+/* Brightness + subtle saturation boost on hover — clean, responsive */
+.photo-card:hover .photo-card__image {
+  filter: brightness(1.08) saturate(1.04);
+  transform: scale(1.02);
+}
+
+/* ── Caption (Polaroid-style) ───────────────────────────────────────────── */
+
+.photo-card__caption {
+  padding: var(--space-3, 12px) var(--space-4, 16px) var(--space-4, 16px);
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--blur-md, 8px));
+  -webkit-backdrop-filter: blur(var(--blur-md, 8px));
+  border-top: 1px solid var(--glass-border);
+}
+
+.photo-card__caption-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: left;
+  word-break: break-word;
+  letter-spacing: 0.2px;
+}
+
+/* ===================== Mobile tweaks ===================== */
+
+@media (max-width: 768px) {
+  .photo-card {
+    --scatter-scale: 0.6;
+  }
+}
+
+@media (max-width: 480px) {
+  .photo-card {
+    --scatter-scale: 0.4;
+  }
+
+  .photo-card__caption {
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+  }
+
+  .photo-card__caption-text {
+    -webkit-line-clamp: 1;
+    font-size: 11px;
+  }
+}
