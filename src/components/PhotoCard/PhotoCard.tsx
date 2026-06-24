@@ -64,25 +64,54 @@ export function PhotoCard({
   const onTouchDragStartRef = useRef(onTouchDragStart)
   useEffect(() => { onTouchDragStartRef.current = onTouchDragStart }, [onTouchDragStart])
 
-  // ── Native touchstart listener ───────────────────────────────────────
-  // React synthetic touchstart is passive by default; we attach natively
-  // with { passive: true } because we don't need preventDefault here —
-  // scroll prevention happens in the touchmove handler inside the hook.
+  // ── Native touch + mouse listeners ───────────────────────────────────
+  // React synthetic events can sometimes miss mouseenter/mouseleave
+  // (e.g. after a drag or on hybrid touch devices). Native listeners
+  // guarantee the hover animation always fires.
+  //
+  // Touch feedback: the card lifts on touchstart and settles on touchend,
+  // providing immediate visual confirmation before any drag gesture.
 
   useEffect(() => {
-    const el = cardRef.current
-    if (!el) return
+    const div = cardRef.current
+    if (!div) return
+    // Separate const so TypeScript can narrow it across closure boundaries
+    const card: HTMLElement = div
 
     function onTouchStart(e: TouchEvent) {
       // Only respond to single-finger touches on the card itself
-      if (e.touches.length !== 1 || !el) return
+      if (e.touches.length !== 1) return
       const touch = e.touches[0]
       if (!touch) return
-      onTouchDragStartRef.current?.(id, el, touch.clientX, touch.clientY)
+      onTouchDragStartRef.current?.(id, card, touch.clientX, touch.clientY)
+      // Immediate visual feedback — lift the card on touch
+      animateCardHoverIn(card)
     }
 
-    el.addEventListener('touchstart', onTouchStart, { passive: true })
-    return () => el.removeEventListener('touchstart', onTouchStart)
+    function onTouchEnd() {
+      animateCardHoverOut(card)
+    }
+
+    function onNativeMouseEnter() {
+      animateCardHoverIn(card)
+    }
+
+    function onNativeMouseLeave() {
+      animateCardHoverOut(card)
+    }
+
+    card.addEventListener('touchstart', onTouchStart, { passive: true })
+    card.addEventListener('touchend', onTouchEnd, { passive: true })
+    card.addEventListener('touchcancel', onTouchEnd, { passive: true })
+    card.addEventListener('mouseenter', onNativeMouseEnter)
+    card.addEventListener('mouseleave', onNativeMouseLeave)
+    return () => {
+      card.removeEventListener('touchstart', onTouchStart)
+      card.removeEventListener('touchend', onTouchEnd)
+      card.removeEventListener('touchcancel', onTouchEnd)
+      card.removeEventListener('mouseenter', onNativeMouseEnter)
+      card.removeEventListener('mouseleave', onNativeMouseLeave)
+    }
   }, [id])
 
   // ── Hover / focus handlers ───────────────────────────────────────────
