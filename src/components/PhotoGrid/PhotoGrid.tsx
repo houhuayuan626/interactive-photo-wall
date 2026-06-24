@@ -40,14 +40,23 @@ export function PhotoGrid({
 }: PhotoGridProps) {
   const gridRef = useRef<HTMLDivElement>(null)
 
-  // ── User drag offsets (persisted in state, updated only on drag end) ─
-
-  const [userOffsets, setUserOffsets] = useState<Record<number, { x: number; y: number }>>({})
+  /**
+   * Base positions — the accumulated user-applied offset from all completed
+   * drags.  After each drag ends, the gesture's delta is ADDED to this base
+   * (absorption) and the in-progress --user-x/y CSS var is reset to 0.
+   * This keeps the card's total translate offset bounded in a single CSS
+   * custom property and prevents iOS Safari compositor-layer hit-test
+   * degradation after many drags.
+   */
+  const [basePositions, setBasePositions] = useState<Record<number, { x: number; y: number }>>({})
 
   const handleDragCommit = useCallback((id: number, offsetX: number, offsetY: number) => {
-    setUserOffsets(prev => ({
+    setBasePositions(prev => ({
       ...prev,
-      [id]: { x: offsetX, y: offsetY },
+      [id]: {
+        x: (prev[id]?.x ?? 0) + offsetX,
+        y: (prev[id]?.y ?? 0) + offsetY,
+      },
     }))
   }, [])
 
@@ -87,15 +96,15 @@ export function PhotoGrid({
   return (
     <div ref={gridRef} className={`photo-grid ${className}`} role="list">
       {photos.map((photo) => {
-        const offset = userOffsets[photo.id]
+        const base = basePositions[photo.id]
         return (
           <div key={photo.id} className="photo-grid__cell" role="listitem">
             <PhotoCard
               photo={photo}
               onClick={onPhotoClick}
               showCaption={showCaptions}
-              userOffsetX={offset?.x ?? 0}
-              userOffsetY={offset?.y ?? 0}
+              baseOffsetX={base?.x ?? 0}
+              baseOffsetY={base?.y ?? 0}
               onDragStart={startDrag}
               onTouchDragStart={startTouchDrag}
             />

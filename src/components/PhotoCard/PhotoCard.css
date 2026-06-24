@@ -54,15 +54,22 @@
   --user-x: 0px;
   --user-y: 0px;
 
+  /* ── Committed base offset (accumulated across drags via React state) ─ */
+  --offset-x: 0px;
+  --offset-y: 0px;
+
   /* ── Scatter scale (1 on desktop, reduced on mobile) ────────────── */
   --scatter-scale: 1;
 
-  /* Compose scatter + GSAP + user into a single transform.
+  /* Compose scatter + base offset + GSAP + in-progress drag into a
+     single transform.  --offset-x/y holds the accumulated user offset
+     committed from previous drags; --user-x/y is only the current
+     in-progress gesture offset (reset to 0 after each drag end).
      translate3d avoids GPU-promotion issues on some hardware. */
   transform:
     translate3d(
-      calc(var(--scatter-x) * var(--scatter-scale) + var(--user-x)),
-      calc(var(--scatter-y) * var(--scatter-scale) + var(--gsap-y) + var(--user-y)),
+      calc(var(--scatter-x) * var(--scatter-scale) + var(--offset-x, 0px) + var(--user-x)),
+      calc(var(--scatter-y) * var(--scatter-scale) + var(--gsap-y) + var(--offset-y, 0px) + var(--user-y)),
       0
     )
     rotate(calc(var(--scatter-rotate) * var(--scatter-scale)))

@@ -31,11 +31,11 @@ export interface PhotoCardProps {
 
   /* ══════════════ Phase 7A — Draggable Card ══════════════ */
 
-  /** User-applied horizontal offset (px), committed after drag end */
-  readonly userOffsetX?: number
+  /** Accummulated horizontal base offset (px) from all previous drags */
+  readonly baseOffsetX?: number
 
-  /** User-applied vertical offset (px), committed after drag end */
-  readonly userOffsetY?: number
+  /** Accummulated vertical base offset (px) from all previous drags */
+  readonly baseOffsetY?: number
 
   /** Called on mousedown to start a mouse drag gesture */
   readonly onDragStart?: (id: number, el: HTMLElement, clientX: number, clientY: number) => void
@@ -51,8 +51,8 @@ export function PhotoCard({
   onClick,
   showCaption = false,
   className = '',
-  userOffsetX = 0,
-  userOffsetY = 0,
+  baseOffsetX = 0,
+  baseOffsetY = 0,
   onDragStart,
   onTouchDragStart,
 }: PhotoCardProps) {
@@ -172,8 +172,10 @@ export function PhotoCard({
     '--scatter-x': `${offsetX}px`,
     '--scatter-y': `${offsetY}px`,
     '--scatter-rotate': `${rotation}deg`,
-    '--user-x': `${userOffsetX}px`,
-    '--user-y': `${userOffsetY}px`,
+    '--offset-x': `${baseOffsetX}px`,
+    '--offset-y': `${baseOffsetY}px`,
+    '--user-x': '0px',
+    '--user-y': '0px',
   } as React.CSSProperties
 
   return (

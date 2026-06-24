@@ -1,11 +1,21 @@
 /**
  * useCardDrag — mouse + touch drag hook for photo cards.
  *
- * Drags a card by directly updating CSS custom properties (--user-x, --user-y)
- * so there are zero React re-renders during the gesture.
+ * Drags a card by directly updating CSS custom properties so there are
+ * zero React re-renders during the gesture.
  *
- * On drag end the final offset is committed via a callback, allowing the
- * parent to persist user positions in React state.
+ * The total card offset is split across two CSS custom properties:
+ *   - `--offset-x/y` — committed base offset (accumulated from ALL past
+ *     drags, stored in React state, stable between drags)
+ *   - `--user-x/y`   — in-progress drag offset (set by this hook during
+ *     a gesture, always reset to 0 after drag end)
+ *
+ * This split keeps the in-progress transform values small, preventing
+ * iOS Safari compositor-layer hit-test degradation that can occur after
+ * many drag gestures with large accumulated offsets.
+ *
+ * On drag end the gesture delta is committed via a callback; the parent
+ * absorbs it into the base offset (see PhotoGrid's handleDragCommit).
  *
  * ## Architecture
  *
@@ -24,8 +34,9 @@
  *   │     │
  *   ▼     ▼
  * setProperty  remove listeners
- * (--user-x)   commit via callback
- * (--user-y)   setTimeout clear dataset
+ * (--user-x/y)  commit delta via callback
+ *               setTimeout clear dataset
+ *               reset --user-x/y to 0px
  * ```
  *
  * ## Touch handling
@@ -36,7 +47,7 @@
  *  - The touchmove handler uses `{ passive: false }` and calls
  *    `preventDefault()` — the browser waits for this listener before
  *    deciding to scroll, so a finger drag on a card stays on the card.
- *  - `touch-action: none` on the card element (set in CSS) provides an
+ *  - `touch-action: pan-y` on the card element (set in CSS) provides an
  *    additional layer of scroll prevention.
  *
  * ## Dual-input guarding
@@ -130,6 +141,11 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
   /**
    * Full state reset — used both at drag end and defensively before
    * starting a new gesture to recover from any stuck state.
+   *
+   * NOTE: Does NOT remove document-level event listeners. That is the
+   * responsibility of cleanupTouch (for touch) or onMouseUp (for mouse).
+   * Callers must ensure stale listeners are handled via gestureGenRef
+   * (touch) or by letting the old gesture's cleanup finish (mouse).
    */
   function forceResetState() {
     const s = dragRef.current
@@ -183,6 +199,14 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
     if (s.element) {
       stackingIndexRef.current += 1
       s.element.style.zIndex = String(stackingIndexRef.current)
+
+      // Reset the in-progress drag offset — it has been committed to the
+      // base position (--offset-x/y) via onCommit above, so the card's
+      // total transform remains correct.  Keeping --user-x/y small
+      // prevents iOS Safari compositor-layer hit-test degradation after
+      // many drag gestures.
+      s.element.style.setProperty('--user-x', '0px')
+      s.element.style.setProperty('--user-y', '0px')
     }
 
     // Clear drag flag after click has a chance to fire.
@@ -316,6 +340,10 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
 
         if (axisLocked === 'v') {
           // Vertical scroll intent — stop tracking, let browser scroll
+          if (s.element) {
+            s.element.style.setProperty('--user-x', '0px')
+            s.element.style.setProperty('--user-y', '0px')
+          }
           s.element = null
           s.cardId = null
           document.removeEventListener('touchmove', onTouchMove)
@@ -355,6 +383,11 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
           // temporary z-index 999 is only set AFTER the drag threshold
           // is crossed (inside onTouchMove), so it was never applied in
           // this path.
+          // Still reset --user-x/y to 0 so the next gesture starts clean.
+          if (s.element) {
+            s.element.style.setProperty('--user-x', '0px')
+            s.element.style.setProperty('--user-y', '0px')
+          }
           s.element = null
           s.cardId = null
           s.isDragging = false
