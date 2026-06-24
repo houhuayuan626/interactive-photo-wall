@@ -154,6 +154,10 @@ export function PhotoCard({
     (e: React.MouseEvent) => {
       // Only primary button
       if (e.button !== 0) return
+      // Ignore synthetic mouse events generated from touch (mobile).
+      // Supported in Chrome 55+ and Safari 16+.
+      const native = e.nativeEvent as MouseEvent
+      if ((native as any).sourceCapabilities?.firesTouchEvents) return
       e.preventDefault()
       if (cardRef.current && onDragStart) {
         onDragStart(id, cardRef.current, e.clientX, e.clientY)

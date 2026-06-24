@@ -40,14 +40,14 @@
  *    additional layer of scroll prevention.
  *
  * ## Dual-input guarding
- *  - Both `startDrag` and `startTouchDrag` check `dragRef.current.isDragging`
- *    before proceeding — if a touch drag is active a mouse-initiated drag
- *    is silently ignored and vice versa.
- *  - A `touchInProgress` flag is set during a touch gesture and cleared
- *    300 ms after touchend. This blocks synthetic mousedown events (which
- *    iOS / Android fire after touch) from starting a redundant mouse drag.
- *  - The 300 ms timer is tracked and cancelled on new gesture start,
- *    preventing stale timeouts from corrupting state.
+ *  - Synthetic mouse events from touch are filtered at the source via
+ *    `sourceCapabilities.firesTouchEvents` in PhotoCard's mousedown
+ *    handler — no chance to corrupt drag state.
+ *  - As a fallback, a `touchActiveRef` flag is set during the touch
+ *    gesture and checked in `startDrag`.
+ *  - A **gesture generation counter** prevents stale event handlers
+ *    (e.g. an orphan `onTouchMove` from a cancelled gesture) from
+ *    interfering with the current gesture.
  *
  * ## Drag-vs-click
  *  - Sets `el.dataset.dragged` when movement exceeds 5 px threshold.
@@ -106,36 +106,26 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
   })
 
   /**
-   * Guard flag that stays true during a touch gesture + a short cooldown
-   * after touchend to suppress synthetic mousedown events.
-   */
-  const touchGuardRef = useRef(false)
-  /** Track the touch-guard timeout so we can cancel it on new gesture. */
-  const touchGuardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  /** Cancel any pending touch-guard timeout. */
-  function clearTouchGuardTimer() {
-    if (touchGuardTimerRef.current !== null) {
-      clearTimeout(touchGuardTimerRef.current)
-      touchGuardTimerRef.current = null
-    }
-  }
-
-  /** Set touch guard with a cancellable timeout. */
-  function scheduleTouchGuardRelease(ms: number) {
-    clearTouchGuardTimer()
-    touchGuardTimerRef.current = setTimeout(() => {
-      touchGuardRef.current = false
-      touchGuardTimerRef.current = null
-    }, ms)
-  }
-
-  /**
    * Monotonically increasing stacking counter.
    * Each time a drag ends, we increment this and assign it as the card's
    * z-index, so the most recently dragged card always sits on top.
    */
   const stackingIndexRef = useRef(0)
+
+  /**
+   * Gesture generation ID — incremented at the start of every gesture.
+   * Event handlers capture the generation at creation time and check it
+   * against the live value. If they don't match, the handler was from a
+   * stale / cancelled gesture and should bail out immediately.
+   */
+  const gestureGenRef = useRef(0)
+
+  /**
+   * Flag set during an active touch gesture (startTouchDrag → cleanupTouch).
+   * Used as a fallback in startDrag to block synthetic mouse events on
+   * devices where sourceCapabilities isn't supported.
+   */
+  const touchActiveRef = useRef(false)
 
   /**
    * Full state reset — used both at drag end and defensively before
@@ -160,8 +150,7 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
     s.offsetX = 0
     s.offsetY = 0
 
-    clearTouchGuardTimer()
-    touchGuardRef.current = false
+    touchActiveRef.current = false
   }
 
   // ── Shared "move" logic (identical between mouse and touch) ──────────
@@ -207,11 +196,15 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
   }
 
   // ── Mouse drag ───────────────────────────────────────────────────────
+  // IMPORTANT: Synthetic mouse events generated from touch are filtered
+  // at the source (PhotoCard's handleMouseDown checks
+  // sourceCapabilities.firesTouchEvents). The defensive checks below are
+  // a fallback for browsers that don't support that API.
 
   const startDrag = useCallback(
     (id: number, el: HTMLElement, clientX: number, clientY: number) => {
-      // Defensive: if state got stuck (e.g. missed mouseup), recover first.
-      if (dragRef.current.isDragging || touchGuardRef.current) {
+      // Defensive: if state is stuck (e.g. missed mouseup), recover first.
+      if (dragRef.current.isDragging || touchActiveRef.current) {
         forceResetState()
       }
 
@@ -256,18 +249,22 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
   // touch-action: pan-y on the card means the browser handles vertical
   // scroll natively. We only claim the gesture once horizontal movement
   // exceeds THRESHOLD — until then touchmove passes through for scroll.
+  //
+  // A gesture generation counter ensures that event handler closures from
+  // a previous touch gesture never corrupt the current one.
 
   const TOUCH_DRAG_THRESHOLD = 6
 
   const startTouchDrag = useCallback(
     (id: number, el: HTMLElement, clientX: number, clientY: number) => {
-      // Defensive: if any state is stuck (e.g. stale touchGuardRef), recover first.
-      if (dragRef.current.isDragging || touchGuardRef.current) {
-        forceResetState()
-      }
+      // Bump generation — any lingering handlers from a previous gesture
+      // will see the mismatch and bail out.
+      gestureGenRef.current += 1
+      const gen = gestureGenRef.current
 
-      // Block synthetic mouse events for a full cycle
-      touchGuardRef.current = true
+      // Defensive: kill any stuck state
+      forceResetState()
+      touchActiveRef.current = true
 
       const state = dragRef.current
 
@@ -287,6 +284,9 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
       let axisLocked: 'h' | 'v' | null = null
 
       function onTouchMove(ev: TouchEvent) {
+        // Stale gesture guard — if we're no longer the current gesture, bail.
+        if (gen !== gestureGenRef.current) return
+
         const s = dragRef.current
         if (!s.element) return
         const touch = ev.touches[0]
@@ -321,9 +321,7 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
           document.removeEventListener('touchmove', onTouchMove)
           document.removeEventListener('touchend', onTouchEnd)
           document.removeEventListener('touchcancel', onTouchCancel)
-          // Release the touch guard so the next gesture isn't blocked.
-          touchGuardRef.current = false
-          clearTouchGuardTimer()
+          touchActiveRef.current = false
           return
         }
 
@@ -338,6 +336,10 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
       }
 
       function cleanupTouch() {
+        // Stale gesture guard — if we're no longer the current gesture,
+        // our listeners were already superseded. Bail without touching state.
+        if (gen !== gestureGenRef.current) return
+
         document.removeEventListener('touchmove', onTouchMove)
         document.removeEventListener('touchend', onTouchEnd)
         document.removeEventListener('touchcancel', onTouchCancel)
@@ -358,9 +360,7 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
           s.isDragging = false
         }
 
-        // Keep the touch guard for 300 ms — cancel any stale timer first
-        // so a lingering timeout from a prior gesture doesn't clear our guard.
-        scheduleTouchGuardRelease(300)
+        touchActiveRef.current = false
       }
 
       function onTouchEnd() { cleanupTouch() }
@@ -369,10 +369,6 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
       document.addEventListener('touchmove', onTouchMove, { passive: false })
       document.addEventListener('touchend', onTouchEnd, { passive: true })
       document.addEventListener('touchcancel', onTouchCancel, { passive: true })
-
-      // Cancel any stale touch-guard timer from a prior gesture so it
-      // doesn't fire during this gesture and corrupt touchGuardRef.
-      clearTouchGuardTimer()
     },
     [],
   )
