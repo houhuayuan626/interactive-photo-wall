@@ -131,6 +131,13 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
   }
 
   /**
+   * Monotonically increasing stacking counter.
+   * Each time a drag ends, we increment this and assign it as the card's
+   * z-index, so the most recently dragged card always sits on top.
+   */
+  const stackingIndexRef = useRef(0)
+
+  /**
    * Full state reset — used both at drag end and defensively before
    * starting a new gesture to recover from any stuck state.
    */
@@ -182,9 +189,11 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
       onCommitRef.current?.(s.cardId, s.offsetX, s.offsetY)
     }
 
-    // Reset z-index back to auto so cards stack naturally again
+    // Bump the stacking counter and freeze this card's layer so the most
+    // recently dragged card always sits on top of previously moved ones.
     if (s.element) {
-      s.element.style.zIndex = ''
+      stackingIndexRef.current += 1
+      s.element.style.zIndex = String(stackingIndexRef.current)
     }
 
     // Clear drag flag after click has a chance to fire.
