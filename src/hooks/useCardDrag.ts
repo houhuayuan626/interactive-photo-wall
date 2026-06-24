@@ -144,12 +144,12 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
   function forceResetState() {
     const s = dragRef.current
 
-    // Clean up any lingering document listeners
-    // (We can't remove specific anonymous listeners, but we can reset ref state.)
-
-    // Reset z-index on any element that still has it
-    if (s.element) {
+    // Only reset the temporary drag z-index (999) — never clear a
+    // permanent stacking z-index that was assigned by a previous drag.
+    if (s.element && s.element.style.zIndex === '999') {
       s.element.style.zIndex = ''
+    }
+    if (s.element) {
       s.element = null
     }
 
@@ -321,8 +321,9 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
           document.removeEventListener('touchmove', onTouchMove)
           document.removeEventListener('touchend', onTouchEnd)
           document.removeEventListener('touchcancel', onTouchCancel)
-          // Don't force touchGuardRef false here — let the existing
-          // guard timeout (or a new one) release it naturally.
+          // Release the touch guard so the next gesture isn't blocked.
+          touchGuardRef.current = false
+          clearTouchGuardTimer()
           return
         }
 
@@ -346,8 +347,12 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
         if (s.isDragging && s.cardId !== null) {
           endDrag()
         } else {
-          // Clean up without committing
-          if (s.element) s.element.style.zIndex = ''
+          // Clean up without committing.
+          // IMPORTANT: NEVER clear the element's z-index here — it may
+          // hold a permanent stacking value from a previous drag. The
+          // temporary z-index 999 is only set AFTER the drag threshold
+          // is crossed (inside onTouchMove), so it was never applied in
+          // this path.
           s.element = null
           s.cardId = null
           s.isDragging = false
