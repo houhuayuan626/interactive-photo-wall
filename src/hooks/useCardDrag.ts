@@ -258,6 +258,8 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
           s.cardId = null
           document.removeEventListener('touchmove', onTouchMove)
           document.removeEventListener('touchend', onTouchEnd)
+          document.removeEventListener('touchcancel', cleanupTouch)
+          touchGuardRef.current = false
           return
         }
 
@@ -271,9 +273,10 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
         applyMove(dx, dy)
       }
 
-      function onTouchEnd() {
+      function cleanupTouch() {
         document.removeEventListener('touchmove', onTouchMove)
         document.removeEventListener('touchend', onTouchEnd)
+        document.removeEventListener('touchcancel', cleanupTouch)
 
         // Commit only if an actual drag happened
         const s = dragRef.current
@@ -293,8 +296,12 @@ export function useCardDrag({ onCommit }: UseCardDragOptions): UseCardDragReturn
         setTimeout(() => { touchGuardRef.current = false }, 300)
       }
 
+      function onTouchEnd() { cleanupTouch() }
+      function onTouchCancel() { cleanupTouch() }
+
       document.addEventListener('touchmove', onTouchMove, { passive: false })
       document.addEventListener('touchend', onTouchEnd, { passive: true })
+      document.addEventListener('touchcancel', onTouchCancel, { passive: true })
     },
     [],
   )
