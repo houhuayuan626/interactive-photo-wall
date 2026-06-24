@@ -38,7 +38,7 @@ const CAPTIONS: readonly string[] = [
 
 function getPhotoSrc(id: number): string {
   const padded = String(id).padStart(3, '0')
-  return `/pic/${padded}.jpg`
+  return `${import.meta.env.BASE_URL}pic/${padded}.jpg`
 }
 
 /**

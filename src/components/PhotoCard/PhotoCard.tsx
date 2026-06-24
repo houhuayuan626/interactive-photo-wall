@@ -75,7 +75,7 @@ export function PhotoCard({
 
     function onTouchStart(e: TouchEvent) {
       // Only respond to single-finger touches on the card itself
-      if (e.touches.length !== 1) return
+      if (e.touches.length !== 1 || !el) return
       const touch = e.touches[0]
       if (!touch) return
       onTouchDragStartRef.current?.(id, el, touch.clientX, touch.clientY)

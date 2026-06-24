@@ -66,7 +66,11 @@ export function Lightbox({
   const onNextRef = useRef(onNext)
   const onPreviousRef = useRef(onPrevious)
 
-  const handlersRef = useRef({
+  const handlersRef = useRef<{
+    dragStart: (clientX: number, clientY: number) => void
+    dragMove: (clientX: number, clientY: number) => void
+    dragEnd: () => void
+  }>({
     dragStart: () => {},
     dragMove: () => {},
     dragEnd: () => {},

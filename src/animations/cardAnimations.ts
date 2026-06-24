@@ -81,7 +81,7 @@ export function animateGridEnter(
  * @param el  The `.photo-card` element.
  * @returns The GSAP tween.
  */
-export function animateCardHoverIn(el: HTMLElement): gsap.core.Timeline {
+export function animateCardHoverIn(el: HTMLElement) {
   if (prefersReducedMotion()) return gsap.timeline()
 
   return gsap.to(el, {
@@ -102,7 +102,7 @@ export function animateCardHoverIn(el: HTMLElement): gsap.core.Timeline {
  * @param el  The `.photo-card` element.
  * @returns The GSAP tween.
  */
-export function animateCardHoverOut(el: HTMLElement): gsap.core.Timeline {
+export function animateCardHoverOut(el: HTMLElement) {
   if (prefersReducedMotion()) return gsap.timeline()
 
   return gsap.to(el, {
