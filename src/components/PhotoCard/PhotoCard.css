@@ -61,6 +61,9 @@
   /* ── Scatter scale (1 on desktop, reduced on mobile) ────────────── */
   --scatter-scale: 1;
 
+  /* ── Stack order for desk-pile z-index (set inline) ─────────────── */
+  z-index: var(--stack-order, 0);
+
   /* Compose scatter + base offset + GSAP + in-progress drag into a
      single transform.  --offset-x/y holds the accumulated user offset
      committed from previous drags; --user-x/y is only the current
@@ -307,10 +310,11 @@
 
 /* ===================== Mobile tweaks ===================== */
 
-@media (max-width: 768px) {
+/* 6→4 cols breakpoint — medium overlap */
+@media (max-width: 900px) {
   .photo-card {
-    --scatter-scale: 0.6;
-    --glass-blur: 16px;
+    --scatter-scale: 0.5;
+    --glass-blur: 20px;
   }
 
   .photo-card__image-wrapper {
@@ -318,10 +322,15 @@
   }
 }
 
-@media (max-width: 480px) {
+/* 4→3 cols breakpoint — tight mobile */
+@media (max-width: 600px) {
   .photo-card {
-    --scatter-scale: 0.4;
-    --glass-blur: 12px;
+    --scatter-scale: 0.3;
+    --glass-blur: 16px;
+  }
+
+  .photo-card__image-wrapper {
+    aspect-ratio: 4 / 3;
   }
 
   .photo-card__caption {
@@ -331,5 +340,13 @@
   .photo-card__caption-text {
     -webkit-line-clamp: 1;
     font-size: 11px;
+  }
+}
+
+/* 3→2 cols breakpoint — very tiny screens */
+@media (max-width: 380px) {
+  .photo-card {
+    --scatter-scale: 0.25;
+    --glass-blur: 12px;
   }
 }

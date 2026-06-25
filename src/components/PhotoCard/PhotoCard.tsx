@@ -167,6 +167,9 @@ export function PhotoCard({
   )
 
   // ── Scatter + user offset style ──────────────────────────────────────
+  // Stack order uses a deterministic shuffle so cards naturally pile
+  // on top of each other like photos on a desk.
+  const stackOrder = 16 - ((id * 7 + 3) % 16)
 
   const scatterStyle = {
     '--scatter-x': `${offsetX}px`,
@@ -176,6 +179,7 @@ export function PhotoCard({
     '--offset-y': `${baseOffsetY}px`,
     '--user-x': '0px',
     '--user-y': '0px',
+    '--stack-order': stackOrder,
   } as React.CSSProperties
 
   return (

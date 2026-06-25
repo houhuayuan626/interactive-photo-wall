@@ -1,21 +1,21 @@
 /**
- * PhotoGrid styles.
+ * PhotoGrid styles — dense "scattered on desk" layout.
  *
- * CSS Grid with responsive column counts:
- *   Desktop (>1024px) → 5 columns
- *   Tablet  (768–1024px) → 3 columns
- *   Mobile  (<768px)  → 2 columns
+ * Desktop choice: 6 columns so 16 photos fit in 3 rows (no scroll).
+ * Responsive stepping: 6 → 4 → 3 → 2 columns.
  *
- * No horizontal scrolling at any breakpoint.
+ * Gaps are minimal and padding is tight — the "floating" look comes
+ * from the scatter transforms (rotation + large offsets), not spacing.
  *
- * Polish: refined spacing scale, max-width centering.
+ * Key: `overflow: visible` on cells means scatter offsets visually
+ * overlap cards across cell boundaries without affecting the grid flow.
  */
 
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-6, 28px);
-  padding: var(--space-12, 48px);
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  padding: 24px 32px;
   width: 100%;
   max-width: 1440px;
   box-sizing: border-box;
@@ -44,29 +44,37 @@
 
 /* ===================== Responsive breakpoints ===================== */
 
-/* Tablet */
-@media (max-width: 1024px) {
+/* Small desktop — keep 6 columns for compact 3-row layout */
+@media (max-width: 1200px) {
+  .photo-grid {
+    gap: 3px;
+    padding: 20px 24px;
+  }
+}
+
+/* Tablet portrait — 4 columns so cells stay reasonable */
+@media (max-width: 900px) {
+  .photo-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    padding: 16px 16px;
+  }
+}
+
+/* Mobile — 3 columns, very tight */
+@media (max-width: 600px) {
   .photo-grid {
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-5, 22px);
-    padding: var(--space-8, 32px) var(--space-6, 24px);
+    gap: 2px;
+    padding: 10px 6px;
   }
 }
 
-/* Mobile */
-@media (max-width: 768px) {
+/* Very narrow — fall back to 2 columns */
+@media (max-width: 380px) {
   .photo-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-2, 8px);
-    padding: var(--space-3, 12px) var(--space-2, 8px);
-  }
-}
-
-/* Very narrow screens — single column (tiny phones only) */
-@media (max-width: 360px) {
-  .photo-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-3, 12px);
-    padding: var(--space-3, 12px) var(--space-2, 8px);
+    gap: 2px;
+    padding: 8px 4px;
   }
 }

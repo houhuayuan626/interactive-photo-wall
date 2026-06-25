@@ -3,6 +3,9 @@
  *
  * Generates rotation and offset values for each photo based on its ID.
  * Layout is identical on every refresh — no Math.random() is used.
+ *
+ * Range: rotation ±15°, offset ±150 px — cards overlap in a dense
+ * "scattered on a desk" arrangement that fits most screens without scroll.
  */
 
 export interface ScatterValues {
@@ -23,14 +26,18 @@ function deterministicFloat(seed: number): number {
 /**
  * Returns deterministic scatter values for a given photo ID.
  *
- * - rotation:  -6° ~ +6°
- * - offsetX:   -15px ~ +15px
- * - offsetY:   -15px ~ +15px
+ * - rotation:  -15° ~ +15°
+ * - offsetX:   -150px ~ +150px
+ * - offsetY:   -150px ~ +150px
+ *
+ * The large offset range creates heavy card-to-card overlap that
+ * mimics the look of physical photos scattered on a desk.
+ * On mobile the values are scaled down via --scatter-scale CSS var.
  */
 export function getPhotoScatter(id: number): ScatterValues {
-  const rotation = (deterministicFloat(id * 7 + 1) - 0.5) * 12
-  const offsetX = (deterministicFloat(id * 13 + 3) - 0.5) * 30
-  const offsetY = (deterministicFloat(id * 17 + 5) - 0.5) * 30
+  const rotation = (deterministicFloat(id * 7 + 1) - 0.5) * 30
+  const offsetX = (deterministicFloat(id * 13 + 3) - 0.5) * 300
+  const offsetY = (deterministicFloat(id * 17 + 5) - 0.5) * 300
 
   return { rotation, offsetX, offsetY }
 }
