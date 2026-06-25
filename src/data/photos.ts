@@ -42,9 +42,9 @@ function getPhotoSrc(id: number): string {
 }
 
 /**
- * Returns the full deterministic photo array.
+ * Returns the full photo array with random scatter positions.
  *
- * Pure function — same call always produces the same result.
+ * Positions are regenerated on every call (each page load gets a new layout).
  */
 export function getAllPhotos(): readonly Photo[] {
   const photos: Photo[] = []

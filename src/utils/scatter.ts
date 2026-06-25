@@ -1,8 +1,8 @@
 /**
- * Deterministic scatter utility.
+ * Random scatter utility.
  *
- * Generates rotation and offset values for each photo based on its ID.
- * Layout is identical on every refresh — no Math.random() is used.
+ * Generates rotation and offset values for each photo using Math.random().
+ * Layout is different on every refresh — cards land in random positions.
  *
  * Range: rotation ±15°, offset ±150 px — cards overlap in a dense
  * "scattered on a desk" arrangement that fits most screens without scroll.
@@ -15,16 +15,7 @@ export interface ScatterValues {
 }
 
 /**
- * Deterministic pseudo-random number in [0, 1).
- * Based on sinusoidal hashing — same seed always produces the same result.
- */
-function deterministicFloat(seed: number): number {
-  const value = Math.sin(seed * 9301 + 49297) * 233280
-  return value - Math.floor(value)
-}
-
-/**
- * Returns deterministic scatter values for a given photo ID.
+ * Returns random scatter values for a given photo ID.
  *
  * - rotation:  -15° ~ +15°
  * - offsetX:   -150px ~ +150px
@@ -34,10 +25,10 @@ function deterministicFloat(seed: number): number {
  * mimics the look of physical photos scattered on a desk.
  * On mobile the values are scaled down via --scatter-scale CSS var.
  */
-export function getPhotoScatter(id: number): ScatterValues {
-  const rotation = (deterministicFloat(id * 7 + 1) - 0.5) * 30
-  const offsetX = (deterministicFloat(id * 13 + 3) - 0.5) * 300
-  const offsetY = (deterministicFloat(id * 17 + 5) - 0.5) * 300
+export function getPhotoScatter(_id: number): ScatterValues {
+  const rotation = (Math.random() - 0.5) * 30
+  const offsetX = (Math.random() - 0.5) * 300
+  const offsetY = (Math.random() - 0.5) * 300
 
   return { rotation, offsetX, offsetY }
 }
