@@ -76,6 +76,10 @@ export function Lightbox({
     dragEnd: () => {},
   })
 
+  // ===================== Swipe-dismiss constants =====================
+  /** Minimum vertical drag distance (px) to trigger swipe-to-dismiss */
+  const SWIPE_DISMISS_THRESHOLD = 120
+
   // ===================== Drag logic =====================
 
   function handleDragStart(clientX: number, clientY: number) {
@@ -90,13 +94,74 @@ export function Lightbox({
     dragOffsetX.current = clientX - dragStartX.current
     dragOffsetY.current = clientY - dragStartY.current
 
-    const progress = Math.min(Math.abs(dragOffsetX.current) / 80, 1)
+    const absDx = Math.abs(dragOffsetX.current)
+    const absDy = Math.abs(dragOffsetY.current)
+    const navProgress = Math.min(absDx / 80, 1)
+
+    // Dim overlay background when vertical drag is dominant (iOS 26 style)
+    const dismissProgress = (absDy > absDx)
+      ? Math.min(absDy / SWIPE_DISMISS_THRESHOLD, 1)
+      : 0
 
     gsap.set(imageRef.current, {
       x: dragOffsetX.current,
       y: dragOffsetY.current,
       rotation: dragOffsetX.current * 0.02,
-      scale: 1 - progress * 0.06,
+      scale: 1 - Math.max(navProgress, dismissProgress) * 0.06,
+    })
+
+    // Progressively dim the overlay backdrop as user swipes down/up
+    if (overlayRef.current && dismissProgress > 0) {
+      const alpha = 0.85 * (1 - dismissProgress)
+      const blurPx = Math.round(24 * (1 - dismissProgress))
+      overlayRef.current.style.setProperty('--overlay-alpha', String(alpha))
+      overlayRef.current.style.setProperty('--overlay-blur', `${blurPx}px`)
+    }
+  }
+
+  /** Reset overlay CSS custom properties to defaults */
+  function resetOverlayProps() {
+    if (overlayRef.current) {
+      overlayRef.current.style.removeProperty('--overlay-alpha')
+      overlayRef.current.style.removeProperty('--overlay-blur')
+    }
+  }
+
+  /** Reset drag state and overlay after any drag end */
+  function resetDragState() {
+    dragOffsetX.current = 0
+    dragOffsetY.current = 0
+    resetOverlayProps()
+  }
+
+  /** Animate the lightbox closing via a vertical swipe (iOS 26 style) */
+  function closeWithSwipe(direction: number) {
+    if (!imageRef.current || !overlayRef.current) return
+
+    const overlay = overlayRef.current
+    // Read the current alpha set during drag, or default
+    const startAlpha = parseFloat(overlay.style.getPropertyValue('--overlay-alpha')) || 0.85
+    const targetY = direction * window.innerHeight
+
+    // Animate the image flying off-screen while fading the overlay
+    gsap.to(imageRef.current, {
+      y: targetY,
+      opacity: 0,
+      scale: 0.8,
+      duration: 0.4,
+      ease: 'power2.in',
+      onUpdate: function () {
+        // Sync overlay fade with the image tween progress
+        const p = this.progress()
+        const alpha = startAlpha * (1 - p)
+        const blurPx = Math.round(24 * (1 - p))
+        overlay.style.setProperty('--overlay-alpha', String(alpha))
+        overlay.style.setProperty('--overlay-blur', `${blurPx}px`)
+      },
+      onComplete: () => {
+        resetDragState()
+        onCloseRef.current()
+      },
     })
   }
 
@@ -104,56 +169,77 @@ export function Lightbox({
     if (!isDragging.current || !imageRef.current) return
     isDragging.current = false
 
-    const threshold = 80
+    const navThreshold = 80
+    const dismissThreshold = SWIPE_DISMISS_THRESHOLD
+    const dx = dragOffsetX.current
+    const dy = dragOffsetY.current
+    const absDx = Math.abs(dx)
+    const absDy = Math.abs(dy)
 
-    // Dragged past threshold → snap out and navigate
-    if (dragOffsetX.current > threshold) {
-      gsap.to(imageRef.current, {
-        x: 250,
-        opacity: 0,
-        rotation: 6,
-        scale: 0.92,
-        duration: 0.3,
-        ease: 'power2.in',
-        onComplete: () => {
-          dragOffsetX.current = 0
-          dragOffsetY.current = 0
-          onNextRef.current()
-        },
-      })
+    // ── Vertical swipe dismiss (dominant Y) — iOS 26 style ──
+    if (absDy > dismissThreshold && absDy > absDx) {
+      closeWithSwipe(dy > 0 ? 1 : -1)
       return
     }
 
-    if (dragOffsetX.current < -threshold) {
-      gsap.to(imageRef.current, {
-        x: -250,
-        opacity: 0,
-        rotation: -6,
-        scale: 0.92,
-        duration: 0.3,
-        ease: 'power2.in',
-        onComplete: () => {
-          dragOffsetX.current = 0
-          dragOffsetY.current = 0
-          onPreviousRef.current()
-        },
-      })
-      return
+    // ── Horizontal navigation (dominant X) ──
+    if (absDx > absDy) {
+      if (dx > navThreshold) {
+        gsap.to(imageRef.current, {
+          x: 250,
+          opacity: 0,
+          rotation: 6,
+          scale: 0.92,
+          duration: 0.3,
+          ease: 'power2.in',
+          onComplete: () => {
+            resetDragState()
+            onNextRef.current()
+          },
+        })
+        return
+      }
+
+      if (dx < -navThreshold) {
+        gsap.to(imageRef.current, {
+          x: -250,
+          opacity: 0,
+          rotation: -6,
+          scale: 0.92,
+          duration: 0.3,
+          ease: 'power2.in',
+          onComplete: () => {
+            resetDragState()
+            onPreviousRef.current()
+          },
+        })
+        return
+      }
     }
 
-    // Below threshold → smooth spring-back to rest
-    gsap.to(imageRef.current, {
+    // ── Below threshold → smooth spring-back to rest ──
+    const springTl = gsap.timeline({
+      onComplete: () => resetDragState(),
+    })
+
+    springTl.to(imageRef.current, {
       x: 0,
       y: 0,
       rotation: 0,
       scale: 1,
       duration: 0.65,
       ease: 'back.out(1.7)',
-      onComplete: () => {
-        dragOffsetX.current = 0
-        dragOffsetY.current = 0
-      },
-    })
+    }, 0)
+
+    // Also animate the overlay back to opaque if it was dimmed
+    if (overlayRef.current && overlayRef.current.style.getPropertyValue('--overlay-alpha')) {
+      springTl.to(overlayRef.current, {
+        '--overlay-alpha': 0.85,
+        '--overlay-blur': '24px',
+        duration: 0.5,
+        ease: 'power2.out',
+      }, 0)
+    }
   }
 
   // Keep the ref current so native listeners always invoke fresh handlers
@@ -293,6 +379,8 @@ export function Lightbox({
 
   function handleClose() {
     if (!overlayRef.current || !contentRef.current) return
+    // Reset any overlay dimming that may have been set during a swipe gesture
+    resetOverlayProps()
     timelineRef.current?.kill()
     timelineRef.current = animateLightboxClose(
       overlayRef.current,
