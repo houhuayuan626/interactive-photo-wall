@@ -289,11 +289,14 @@ export function Lightbox({
   // we can prevent scrolling while the user drags the image.
 
   useEffect(() => {
-    const img = imageRef.current
-    if (!img) return
+    const overlay = overlayRef.current
+    if (!overlay) return
 
     function onTouchStart(e: TouchEvent) {
-      if (e.target !== img) return
+      // Don't intercept touches on interactive elements (close, nav buttons)
+      const target = e.target as HTMLElement
+      if (target.closest('button')) return
+
       const touch = e.touches[0]
       if (!touch) return
       handlersRef.current.dragStart(touch.clientX, touch.clientY)
@@ -313,18 +316,18 @@ export function Lightbox({
       handlersRef.current.dragEnd()
     }
 
-    img.addEventListener('touchstart', onTouchStart, { passive: true })
-    img.addEventListener('touchmove', onTouchMove, { passive: false })
-    img.addEventListener('touchend', onTouchEnd, { passive: true })
+    overlay.addEventListener('touchstart', onTouchStart, { passive: true })
+    overlay.addEventListener('touchmove', onTouchMove, { passive: false })
+    overlay.addEventListener('touchend', onTouchEnd, { passive: true })
 
-    // Catch moves/releases that leave the image element
+    // Catch moves/releases that leave the overlay element
     document.addEventListener('touchmove', onTouchMove, { passive: false })
     document.addEventListener('touchend', onTouchEnd, { passive: true })
 
     return () => {
-      img.removeEventListener('touchstart', onTouchStart)
-      img.removeEventListener('touchmove', onTouchMove)
-      img.removeEventListener('touchend', onTouchEnd)
+      overlay.removeEventListener('touchstart', onTouchStart)
+      overlay.removeEventListener('touchmove', onTouchMove)
+      overlay.removeEventListener('touchend', onTouchEnd)
       document.removeEventListener('touchmove', onTouchMove)
       document.removeEventListener('touchend', onTouchEnd)
     }

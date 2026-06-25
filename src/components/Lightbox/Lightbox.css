@@ -27,6 +27,7 @@
   cursor: default;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: none;
 
   /* Premium gradient-tinted backdrop — warm purple glow at center */
   &::before {
