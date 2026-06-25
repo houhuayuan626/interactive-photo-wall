@@ -97,34 +97,34 @@
   --gradient-accent: linear-gradient(135deg, #c084fc, #a78bfa, #e879f9);
   --gradient-accent-strong: linear-gradient(135deg, #a855f7, #7c3aed, #db2777);
 
-  /* iOS 26 — warm amber-to-midnight gradient palette */
+  /* iOS 26 — soft purple/violet breathing gradient palette (淡雅紫) */
   --gradient-ios26-base: linear-gradient(
     165deg,
-    #1a0a0e 0%,
-    #1a0f1a 20%,
-    #0f0a18 45%,
-    #05040a 70%,
-    #020108 100%
+    #1c0a20 0%,
+    #140a20 20%,
+    #0e0818 45%,
+    #080410 70%,
+    #040208 100%
   );
   --gradient-ios26-warm: radial-gradient(
     ellipse 90% 55% at 25% 15%,
-    rgba(255, 170, 120, 0.12) 0%,
-    rgba(255, 120, 130, 0.08) 25%,
-    rgba(180, 100, 200, 0.06) 50%,
+    rgba(200, 160, 255, 0.16) 0%,
+    rgba(180, 130, 245, 0.10) 25%,
+    rgba(155, 105, 225, 0.06) 50%,
     transparent 80%
   );
   --gradient-ios26-cool: radial-gradient(
     ellipse 70% 60% at 75% 85%,
-    rgba(100, 140, 255, 0.10) 0%,
-    rgba(80, 100, 220, 0.06) 30%,
-    rgba(60, 60, 180, 0.04) 50%,
+    rgba(165, 135, 255, 0.13) 0%,
+    rgba(135, 105, 245, 0.08) 30%,
+    rgba(105, 75, 205, 0.05) 50%,
     transparent 75%
   );
   --gradient-ios26-glow: radial-gradient(
     ellipse 60% 45% at 50% 40%,
-    rgba(255, 200, 150, 0.06) 0%,
-    rgba(220, 150, 180, 0.04) 30%,
-    rgba(150, 120, 200, 0.03) 55%,
+    rgba(225, 185, 255, 0.09) 0%,
+    rgba(195, 155, 245, 0.06) 30%,
+    rgba(165, 125, 225, 0.04) 55%,
     transparent 80%
   );
 

@@ -1,8 +1,8 @@
 /**
  * Background — iOS 26 gradient wallpaper.
  *
- * Three layered glow zones (warm top-left, cool bottom-right, center ambient)
- * that drift and pulse independently over a deep midnight base gradient.
+ * Three layered purple-violet glow zones (lavender top-left, violet bottom-right,
+ * lilac center) that drift and pulse independently over a deep indigo base gradient.
  *
  * Purely decorative — `aria-hidden="true"` and no interactive or semantic role.
  *
@@ -18,13 +18,13 @@ import './Background.css'
 function Background() {
   return (
     <div className="background" aria-hidden="true">
-      {/* ── Warm amber/rose glow — top-left ── */}
+      {/* ── Lavender-purple glow — top-left ── */}
       <div className="background__warm" />
 
-      {/* ── Cool blue/violet glow — bottom-right ── */}
+      {/* ── Violet-indigo glow — bottom-right ── */}
       <div className="background__cool" />
 
-      {/* ── Center ambient glow — ties warm and cool ── */}
+      {/* ── Lilac ambient glow — center ── */}
       <div className="background__center" />
 
       {/* ── Vignette (dark edges for focus) ── */}

@@ -1,16 +1,17 @@
 /**
  * Background — iOS 26 gradient wallpaper.
  *
- * A rich, layered gradient backdrop inspired by Apple's iOS 26 wallpaper
- * language: warm amber/copper tones at the top transition through rose
- * and violet into a deep midnight blue at the bottom.
+ * A rich, layered gradient backdrop featuring a soft purple-violet
+ * palette inspired by iOS 26's ambient wallpaper language:
+ * lavender/mauve tones at the top transition through violet and
+ * lilac into a deep indigo at the bottom.
  *
  * Architecture:
  *  - Fixed full-screen layer at z-index -1 (behind all content).
- *  - Base gradient: warm dark → deep midnight (the "canvas").
- *  - Warm glow layer: soft amber/rose light from top-left (sunset memory).
- *  - Cool glow layer: soft blue/violet light from bottom-right (deep space).
- *  - Center ambient glow: ties warm and cool together.
+ *  - Base gradient: deep indigo → midnight (the "canvas").
+ *  - Lavender glow layer: soft purple light from top-left (ambient morning).
+ *  - Violet glow layer: soft indigo light from bottom-right (deep space).
+ *  - Lilac ambient glow: ties lavender and violet together.
  *  - Very slow drift animation for a subtle living-wallpaper feel.
  *  - Vignette darkens edges for cinematic focus.
  *  - Noise texture adds film grain warmth.
@@ -30,7 +31,7 @@
   overflow: hidden;
   pointer-events: none;
 
-  /* Base canvas — deep warm-to-midnight gradient */
+  /* Base canvas — deep indigo-to-midnight gradient */
   background: var(--gradient-ios26-base);
 
   /* Ultra-slow breathing — the wallpaper is alive */
@@ -48,7 +49,7 @@
   }
 }
 
-/* ===================== Warm glow (top-left) ===================== */
+/* ===================== Lavender-purple glow (top-left) ===================== */
 
 .background__warm {
   position: absolute;
@@ -79,7 +80,7 @@
   }
 }
 
-/* ===================== Cool glow (bottom-right) ===================== */
+/* ===================== Violet-indigo glow (bottom-right) ===================== */
 
 .background__cool {
   position: absolute;
@@ -106,7 +107,7 @@
   }
 }
 
-/* ===================== Center ambient glow ===================== */
+/* ===================== Lilac ambient glow (center) ===================== */
 
 .background__center {
   position: absolute;
