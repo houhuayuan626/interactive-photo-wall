@@ -1,11 +1,15 @@
 /**
- * Random scatter utility.
+ * Random scatter utility (viewport‑safe).
  *
  * Generates rotation and offset values for each photo using Math.random().
- * Layout is different on every refresh — cards land in random positions.
+ * Layout is different on every refresh — cards land in random positions
+ * that stay fully visible within the viewport on both desktop and mobile.
  *
- * Range: rotation ±15°, offset ±150 px — cards overlap in a dense
- * "scattered on a desk" arrangement that fits most screens without scroll.
+ * Range: rotation ±12°, offset ±50 px — enough for visible card overlap
+ * ("scattered on a desk") without pushing any card off‑screen.
+ *
+ * Mobile is handled via the --scatter-scale CSS var (0.3–0.5), which
+ * proportionally reduces all values on smaller screens.
  */
 
 export interface ScatterValues {
@@ -17,18 +21,18 @@ export interface ScatterValues {
 /**
  * Returns random scatter values for a given photo ID.
  *
- * - rotation:  -15° ~ +15°
- * - offsetX:   -150px ~ +150px
- * - offsetY:   -150px ~ +150px
+ * - rotation:  -12° ~ +12°
+ * - offsetX:   -50px ~ +50px
+ * - offsetY:   -50px ~ +50px
  *
- * The large offset range creates heavy card-to-card overlap that
- * mimics the look of physical photos scattered on a desk.
- * On mobile the values are scaled down via --scatter-scale CSS var.
+ * The reduced range (vs the original ±150px) ensures all cards stay
+ * entirely within the viewport while still overlapping their neighbours
+ * for the desired "scattered on a desk" aesthetic.
  */
 export function getPhotoScatter(_id: number): ScatterValues {
-  const rotation = (Math.random() - 0.5) * 30
-  const offsetX = (Math.random() - 0.5) * 300
-  const offsetY = (Math.random() - 0.5) * 300
+  const rotation = (Math.random() - 0.5) * 24   // ±12°
+  const offsetX = (Math.random() - 0.5) * 100    // ±50px
+  const offsetY = (Math.random() - 0.5) * 100    // ±50px
 
   return { rotation, offsetX, offsetY }
 }
