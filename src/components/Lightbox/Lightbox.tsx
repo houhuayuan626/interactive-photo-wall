@@ -50,6 +50,7 @@ export function Lightbox({
 }: LightboxProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
   const isDragging = useRef(false)
   const dragStartX = useRef(0)
@@ -89,7 +90,7 @@ export function Lightbox({
   }
 
   function handleDragMove(clientX: number, clientY: number) {
-    if (!isDragging.current || !imageRef.current) return
+    if (!isDragging.current || !cardRef.current) return
 
     dragOffsetX.current = clientX - dragStartX.current
     dragOffsetY.current = clientY - dragStartY.current
@@ -103,7 +104,7 @@ export function Lightbox({
       ? Math.min(absDy / SWIPE_DISMISS_THRESHOLD, 1)
       : 0
 
-    gsap.set(imageRef.current, {
+    gsap.set(cardRef.current, {
       x: dragOffsetX.current,
       y: dragOffsetY.current,
       rotation: dragOffsetX.current * 0.02,
@@ -136,15 +137,15 @@ export function Lightbox({
 
   /** Animate the lightbox closing via a vertical swipe (iOS 26 style) */
   function closeWithSwipe(direction: number) {
-    if (!imageRef.current || !overlayRef.current) return
+    if (!cardRef.current || !overlayRef.current) return
 
     const overlay = overlayRef.current
     // Read the current alpha set during drag, or default
     const startAlpha = parseFloat(overlay.style.getPropertyValue('--overlay-alpha')) || 0.85
     const targetY = direction * window.innerHeight
 
-    // Animate the image flying off-screen while fading the overlay
-    gsap.to(imageRef.current, {
+    // Animate the card flying off-screen while fading the overlay
+    gsap.to(cardRef.current, {
       y: targetY,
       opacity: 0,
       scale: 0.8,
@@ -166,7 +167,7 @@ export function Lightbox({
   }
 
   function handleDragEnd() {
-    if (!isDragging.current || !imageRef.current) return
+    if (!isDragging.current || !cardRef.current) return
     isDragging.current = false
 
     const navThreshold = 80
@@ -185,7 +186,7 @@ export function Lightbox({
     // ── Horizontal navigation (dominant X) ──
     if (absDx > absDy) {
       if (dx > navThreshold) {
-        gsap.to(imageRef.current, {
+        gsap.to(cardRef.current, {
           x: 250,
           opacity: 0,
           rotation: 6,
@@ -201,7 +202,7 @@ export function Lightbox({
       }
 
       if (dx < -navThreshold) {
-        gsap.to(imageRef.current, {
+        gsap.to(cardRef.current, {
           x: -250,
           opacity: 0,
           rotation: -6,
@@ -222,7 +223,7 @@ export function Lightbox({
       onComplete: () => resetDragState(),
     })
 
-    springTl.to(imageRef.current, {
+    springTl.to(cardRef.current, {
       x: 0,
       y: 0,
       rotation: 0,
@@ -266,10 +267,10 @@ export function Lightbox({
     timelineRef.current?.kill()
 
     // Clear any GSAP inline styles left from a previous drag or snap-out.
-    // Without this the new image would start at x:250 / opacity:0 from the
+    // Without this the new card would start at x:250 / opacity:0 from the
     // prior drag-navigation's snap-out animation.
-    if (imageRef.current) {
-      gsap.set(imageRef.current, { clearProps: 'all' })
+    if (cardRef.current) {
+      gsap.set(cardRef.current, { clearProps: 'all' })
     }
 
     timelineRef.current = animateLightboxOpen(
@@ -429,16 +430,21 @@ export function Lightbox({
           </svg>
         </button>
 
-        {/* Image container + draggable image */}
-        <div className="lightbox__image-container">
-          <img
-            ref={imageRef}
-            className="lightbox__image"
-            src={photo.src}
-            alt={caption}
-            draggable={false}
-            onMouseDown={onMouseDown}
-          />
+        {/* Image card — liquid glass frame with Polaroid caption */}
+        <div className="lightbox__card" ref={cardRef}>
+          <div className="lightbox__card-image-wrapper">
+            <img
+              ref={imageRef}
+              className="lightbox__card-image"
+              src={photo.src}
+              alt={caption}
+              draggable={false}
+              onMouseDown={onMouseDown}
+            />
+          </div>
+          <div className="lightbox__card-caption">
+            <span className="lightbox__card-caption-text">{caption}</span>
+          </div>
         </div>
 
         {/* Next button */}
@@ -453,9 +459,8 @@ export function Lightbox({
           </svg>
         </button>
 
-        {/* Info bar */}
+        {/* Counter */}
         <div className="lightbox__info">
-          <p className="lightbox__caption">{caption}</p>
           <span className="lightbox__counter">
             {currentIndex + 1} / {totalPhotos}
           </span>
