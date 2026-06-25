@@ -289,6 +289,8 @@ export function Lightbox({
   // we can prevent scrolling while the user drags the image.
 
   useEffect(() => {
+    // Only attach native listeners when the lightbox has DOM
+    if (!photo) return
     const overlay = overlayRef.current
     if (!overlay) return
 
@@ -331,7 +333,7 @@ export function Lightbox({
       document.removeEventListener('touchmove', onTouchMove)
       document.removeEventListener('touchend', onTouchEnd)
     }
-  }, [])
+  }, [!!photo])
 
   // ===================== Keyboard =====================
 
